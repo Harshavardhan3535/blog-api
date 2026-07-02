@@ -2,23 +2,22 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const validatePost = require('../middleware/validatePost');
+const {
+  sendSuccess,
+  sendCreated,
+  sendNotFound,
+  sendBadRequest
+} = require('../utils/response');
 
 
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/posts — Create a new blog post
 // ═══════════════════════════════════════════════════════════════════
 
-// validatePost runs FIRST (middleware), then the async function runs.
-// If validatePost calls res.status(400)... the async function never runs.
-router.post('/', validatePost, async (req, res) => {
+router.post('/', validatePost, async (req, res, next) => {
   try {
-    // Extract fields from body — already validated by middleware
     const { title, content, author } = req.body;
 
-    // Parameterized query — $1, $2, $3 are placeholders.
-    // The second argument is an array — pg maps index 0 → $1, index 1 → $2, etc.
-    // RETURNING * means PostgreSQL sends back the newly inserted row immediately.
-    // Without RETURNING, you'd have to run a second SELECT to get the new post.
     const result = await pool.query(
       `INSERT INTO posts (title, content, author)
        VALUES ($1, $2, $3)
@@ -26,93 +25,106 @@ router.post('/', validatePost, async (req, res) => {
       [title.trim(), content.trim(), author.trim()]
     );
 
-    // result.rows is always an array. Since we inserted one row, we take index 0.
-    const newPost = result.rows[0];
-
-    // 201 Created — correct HTTP status for successful resource creation
-    res.status(201).json({
-      success: true,
-      message: 'Post created successfully',
-      data: newPost
-    });
+    // Use sendCreated helper — consistent 201 response shape
+    return sendCreated(res, result.rows[0], 'Post created successfully');
 
   } catch (error) {
-    // Log full error on server for debugging, but never send stack traces to client
-    console.error('Error creating post:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    // Instead of handling the error here, we pass it to the
+    // centralized error handler in app.js using next(error)
+    next(error);
   }
 });
 
 
 // ═══════════════════════════════════════════════════════════════════
-// GET /api/posts — Get all posts with pagination
+// GET /api/posts — Get all posts with pagination + optional search
 // ═══════════════════════════════════════════════════════════════════
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
-    // Query params come from the URL: /api/posts?page=2&limit=5
-    // req.query gives us { page: '2', limit: '5' } — always strings
-    // parseInt converts them to numbers. || sets defaults if not provided.
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    // Validate page and limit to prevent abuse (negative values etc.)
+    // search comes from ?search=keyword in the URL
+    // If not provided, req.query.search is undefined — we default to empty string
+    const search = req.query.search ? req.query.search.trim() : '';
+
     if (page < 1 || limit < 1) {
-      return res.status(400).json({
-        success: false,
-        error: 'page and limit must be positive integers'
-      });
+      return sendBadRequest(res, 'page and limit must be positive integers');
     }
 
-    // Cap limit at 100 — prevents someone requesting 100000 rows at once
     if (limit > 100) {
-      return res.status(400).json({
-        success: false,
-        error: 'limit cannot exceed 100'
-      });
+      return sendBadRequest(res, 'limit cannot exceed 100');
     }
 
-    // OFFSET formula: (page - 1) * limit
-    // page=1 → OFFSET 0 (start from beginning)
-    // page=2 → OFFSET 10 (skip first 10)
     const offset = (page - 1) * limit;
 
-    // We need two queries:
-    // 1. The actual posts for this page
-    // 2. The total count of ALL posts (for pagination metadata)
-    // We run them in parallel using Promise.all — faster than sequential awaits
+    let postsQuery;
+    let countQuery;
+    let queryParams;
 
+    if (search) {
+      // ── SEARCH MODE ─────────────────────────────────────────────
+      // ILIKE = case-insensitive LIKE in PostgreSQL
+      // $1 = the search pattern (e.g. '%node%')
+      // $2 = limit, $3 = offset
+      // We search in both title AND content using OR
+      // We wrap search in % wildcards to match anywhere in the string
+      const searchPattern = `%${search}%`;
+
+      postsQuery = {
+        text: `SELECT id, title, author, created_at, updated_at
+               FROM posts
+               WHERE title ILIKE $1 OR content ILIKE $1
+               ORDER BY created_at DESC
+               LIMIT $2 OFFSET $3`,
+        values: [searchPattern, limit, offset]
+      };
+
+      // Count must use the same WHERE clause so pagination is accurate
+      // e.g. if search returns 7 results total, totalPages must reflect 7 not all posts
+      countQuery = {
+        text: `SELECT COUNT(*) FROM posts
+               WHERE title ILIKE $1 OR content ILIKE $1`,
+        values: [searchPattern]
+      };
+
+    } else {
+      // ── NO SEARCH — return all posts ────────────────────────────
+      postsQuery = {
+        text: `SELECT id, title, author, created_at, updated_at
+               FROM posts
+               ORDER BY created_at DESC
+               LIMIT $1 OFFSET $2`,
+        values: [limit, offset]
+      };
+
+      countQuery = {
+        text: 'SELECT COUNT(*) FROM posts',
+        values: []
+      };
+    }
+
+    // Run both queries in parallel — faster than two sequential awaits
     const [postsResult, countResult] = await Promise.all([
-      pool.query(
-        // ORDER BY created_at DESC = newest posts first
-        // LIMIT $1 OFFSET $2 = pagination
-        `SELECT id, title, author, created_at, updated_at
-         FROM posts
-         ORDER BY created_at DESC
-         LIMIT $1 OFFSET $2`,
-        [limit, offset]
-      ),
-      pool.query('SELECT COUNT(*) FROM posts')
+      pool.query(postsQuery),
+      pool.query(countQuery)
     ]);
 
-    // COUNT(*) returns a string in pg — parseInt converts it to a number
     const totalPosts = parseInt(countResult.rows[0].count);
-
-    // Calculate total pages — Math.ceil rounds up
-    // e.g. 25 posts / 10 per page = 2.5 → ceil → 3 pages
     const totalPages = Math.ceil(totalPosts / limit);
 
-    res.status(200).json({
+    // Build the response object manually here since it has extra pagination data
+    return res.status(200).json({
       success: true,
-      // Pagination metadata — frontend uses this to render page controls
+      message: 'Posts fetched successfully',
+      // Include search term in response so client knows what was searched
+      search: search || null,
       pagination: {
         currentPage: page,
-        totalPages: totalPages,
-        totalPosts: totalPosts,
-        limit: limit,
+        totalPages,
+        totalPosts,
+        limit,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1
       },
@@ -120,11 +132,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching posts:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    next(error);
   }
 });
 
@@ -133,45 +141,27 @@ router.get('/', async (req, res) => {
 // GET /api/posts/:id — Get a single post by ID
 // ═══════════════════════════════════════════════════════════════════
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   try {
-    // req.params.id comes from the URL — e.g. /api/posts/5 → id = '5'
-    // It's always a string, parseInt converts it to a number
     const id = parseInt(req.params.id);
 
-    // Validate that id is actually a number — reject /api/posts/abc
     if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Post ID must be a valid integer'
-      });
+      return sendBadRequest(res, 'Post ID must be a valid integer');
     }
 
-    // Parameterized query — $1 is the id
     const result = await pool.query(
       'SELECT * FROM posts WHERE id = $1',
       [id]
     );
 
-    // If no rows returned, the post doesn't exist
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Post not found'
-      });
+      return sendNotFound(res, 'Post not found');
     }
 
-    res.status(200).json({
-      success: true,
-      data: result.rows[0]
-    });
+    return sendSuccess(res, result.rows[0], 'Post fetched successfully');
 
   } catch (error) {
-    console.error('Error fetching post:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    next(error);
   }
 });
 
@@ -180,23 +170,16 @@ router.get('/:id', async (req, res) => {
 // PUT /api/posts/:id — Update an existing post
 // ═══════════════════════════════════════════════════════════════════
 
-// validatePost runs first — same validation rules as POST
-router.put('/:id', validatePost, async (req, res) => {
+router.put('/:id', validatePost, async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
 
     if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Post ID must be a valid integer'
-      });
+      return sendBadRequest(res, 'Post ID must be a valid integer');
     }
 
     const { title, content, author } = req.body;
 
-    // We manually set updated_at to NOW() on every update.
-    // This is more reliable than a DB trigger for now.
-    // $1=title, $2=content, $3=author, $4=id
     const result = await pool.query(
       `UPDATE posts
        SET title = $1, content = $2, author = $3, updated_at = NOW()
@@ -205,26 +188,47 @@ router.put('/:id', validatePost, async (req, res) => {
       [title.trim(), content.trim(), author.trim(), id]
     );
 
-    // If no rows returned, no post with that ID existed
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Post not found'
-      });
+      return sendNotFound(res, 'Post not found');
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Post updated successfully',
-      data: result.rows[0]
-    });
+    return sendSuccess(res, result.rows[0], 'Post updated successfully');
 
   } catch (error) {
-    console.error('Error updating post:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    next(error);
+  }
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// DELETE /api/posts/:id — Delete a post
+// ═══════════════════════════════════════════════════════════════════
+
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (isNaN(id)) {
+      return sendBadRequest(res, 'Post ID must be a valid integer');
+    }
+
+    // RETURNING id confirms which row was deleted.
+    // If no row matched, result.rows will be empty — means post didn't exist.
+    const result = await pool.query(
+      'DELETE FROM posts WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return sendNotFound(res, 'Post not found');
+    }
+
+    // 200 with a message — some APIs return 204 No Content for DELETE
+    // but 200 with confirmation is more informative and easier to test
+    return sendSuccess(res, { deletedId: id }, 'Post deleted successfully');
+
+  } catch (error) {
+    next(error);
   }
 });
 
