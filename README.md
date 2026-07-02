@@ -127,6 +127,7 @@ Implemented pagination using `LIMIT` and `OFFSET` so the API returns only a subs
 
 Building a secure REST API involves more than implementing CRUD operations. Proper input validation, parameterized SQL queries, and pagination improve application security, maintainability, and performance while following backend development best practices.
 
+---
 
 ## Day 3 – Search API, DELETE Route & Centralized Error Handling
 
@@ -249,3 +250,5 @@ Integrated SQL search queries with `LIMIT` and `OFFSET` to efficiently paginate 
 ### Key Takeaway
 
 As backend applications grow, maintainability becomes as important as functionality. Centralized error handling, reusable response utilities, and clean route design reduce code duplication, improve readability, and make the API easier to extend and debug.
+
+---
