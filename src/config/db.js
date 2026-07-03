@@ -1,11 +1,16 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+const connectionString = process.env.DATABASE_URL;
 
-  // No ssl block needed — local PostgreSQL doesn't require SSL.
-  // SSL is only needed for cloud providers like Neon, Render, or Supabase.
+// Check if we're connecting to a cloud database by looking at the URL.
+// Local PostgreSQL URLs contain 'localhost', cloud ones don't.
+// This is more reliable than checking NODE_ENV.
+const isCloudDatabase = connectionString && !connectionString.includes('localhost');
+
+const pool = new Pool({
+  connectionString,
+  ssl: isCloudDatabase ? { rejectUnauthorized: false } : false
 });
 
 pool.connect((err, client, release) => {
