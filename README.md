@@ -1,106 +1,175 @@
 # Blog API
 
-A RESTful Blog API built with Node.js, Express.js, and PostgreSQL. Features full CRUD operations, keyword search, pagination, input validation, and SQL injection prevention using parameterized queries.
+![Node.js](https://img.shields.io/badge/Node.js-20.x-green)
+![Express.js](https://img.shields.io/badge/Express.js-4.x-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![Render](https://img.shields.io/badge/Hosted%20on-Render-purple)
+
+A RESTful Blog API built with **Node.js**, **Express.js**, and **PostgreSQL**. It provides full CRUD functionality for blog posts along with keyword search, pagination, input validation, centralized error handling, and SQL injection prevention using parameterized queries.
 
 ---
 
-## Live Demo
+# 🚀 Live Demo
 
-**Base URL:** https://blog-api-56im.onrender.com
+**Base URL**
 
----
-
-## Tech Stack
-
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** PostgreSQL
-- **Driver:** pg
-- **Testing:** Postman
-- **Deployment:** Render
-- **Version Control:** Git & GitHub
+https://blog-api-56im.onrender.com
 
 ---
 
-## Features
+# 🛠 Tech Stack
 
-- Full CRUD for blog posts
-- Keyword search across title and content
-- Pagination with metadata
-- Manual input validation
-- Parameterized queries (SQL injection prevention)
-- Centralized error handling
-- Consistent JSON response structure
+* **Runtime:** Node.js
+* **Framework:** Express.js
+* **Database:** PostgreSQL
+* **Driver:** pg
+* **Testing:** Postman
+* **Deployment:** Render
+* **Version Control:** Git & GitHub
 
 ---
 
-## Local Setup
+# 📂 Project Structure
 
-### Prerequisites
-- Node.js v18+
-- PostgreSQL installed locally
-
-### Steps
-
-1. Clone the repository
-```bash
-   git clone https://github.com/Harshavardhan3535/blog-api.git
-   cd blog-api
+```text
+blog-api/
+│
+├── src/
+│   ├── config/
+│   ├── middleware/
+│   ├── routes/
+│   ├── utils/
+│   ├── controllers/
+│   └── app.js
+│
+├── schema.sql
+├── server.js
+├── package.json
+├── package-lock.json
+└── README.md
 ```
 
-2. Install dependencies
+---
+
+# ✨ Features
+
+* Full CRUD operations for blog posts
+* Keyword search across title and content
+* Pagination with metadata
+* Manual input validation
+* Parameterized SQL queries
+* SQL injection prevention
+* Centralized error handling
+* Standardized JSON response format
+* Production deployment on Render
+
+---
+
+# 💻 Local Setup
+
+## Prerequisites
+
+* Node.js v18+
+* PostgreSQL installed locally
+
+## Steps
+
+### 1. Clone the repository
+
 ```bash
-   npm install
+git clone https://github.com/Harshavardhan3535/blog-api.git
+
+cd blog-api
 ```
 
-3. Create a `.env` file in the root directory
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Create a `.env` file
+
 ```env
-   PORT=5000
-   DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/blog_api
-   NODE_ENV=development
+PORT=5000
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/blog_api
+NODE_ENV=development
 ```
 
-4. Set up the database
-   - Create a database named `blog_api` in PostgreSQL
-   - Run `schema.sql` in pgAdmin Query Tool
+### 4. Create Database
 
-5. Start the development server
+Create a database named:
+
+```text
+blog_api
+```
+
+Run the provided:
+
+```text
+schema.sql
+```
+
+using pgAdmin Query Tool or psql.
+
+### 5. Start the Server
+
 ```bash
-   npm run dev
+npm run dev
 ```
 
 ---
 
-## API Endpoints
+# 📌 API Endpoints
 
-### Health Check
+## Health Check
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Check if API is running |
+| Method | Endpoint  | Description      |
+| ------ | --------- | ---------------- |
+| GET    | `/health` | Check API status |
 
-### Posts
+## Posts
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/posts` | Create a new post |
-| GET | `/api/posts` | Get all posts (paginated) |
-| GET | `/api/posts?page=1&limit=10` | Get posts with pagination |
-| GET | `/api/posts?search=keyword` | Search posts by keyword |
-| GET | `/api/posts?search=keyword&page=1&limit=5` | Search with pagination |
-| GET | `/api/posts/:id` | Get a single post |
-| PUT | `/api/posts/:id` | Update a post |
-| DELETE | `/api/posts/:id` | Delete a post |
+| Method | Endpoint                                   | Description         |
+| ------ | ------------------------------------------ | ------------------- |
+| POST   | `/api/posts`                               | Create a new post   |
+| GET    | `/api/posts`                               | Get all posts       |
+| GET    | `/api/posts?page=1&limit=10`               | Pagination          |
+| GET    | `/api/posts?search=keyword`                | Keyword search      |
+| GET    | `/api/posts?search=keyword&page=1&limit=5` | Search + Pagination |
+| GET    | `/api/posts/:id`                           | Get post by ID      |
+| PUT    | `/api/posts/:id`                           | Update post         |
+| DELETE | `/api/posts/:id`                           | Delete post         |
 
 ---
 
-## Request & Response Examples
+# 🧪 API Testing
 
-### Create Post
+The API was tested using **Postman**.
 
-**Request**
+The following functionality has been verified:
+
+* Create Post
+* Get All Posts
+* Get Single Post
+* Update Post
+* Delete Post
+* Keyword Search
+* Pagination
+* Input Validation
+* Error Responses
+
+---
+
+# 📄 Request & Response Examples
+
+## Create Post
+
+### Request
+
 ```json
 POST /api/posts
+
 {
   "title": "My First Post",
   "content": "This is the content of my first blog post.",
@@ -108,7 +177,8 @@ POST /api/posts
 }
 ```
 
-**Response**
+### Response
+
 ```json
 {
   "success": true,
@@ -124,29 +194,28 @@ POST /api/posts
 }
 ```
 
-### Get All Posts (Paginated)
+---
 
-**Response**
+## Get All Posts
+
 ```json
 {
   "success": true,
   "message": "Posts fetched successfully",
-  "search": null,
   "pagination": {
     "currentPage": 1,
     "totalPages": 3,
     "totalPosts": 25,
-    "limit": 10,
-    "hasNextPage": true,
-    "hasPreviousPage": false
+    "limit": 10
   },
-  "data": [...]
+  "data": []
 }
 ```
 
-### Validation Error
+---
 
-**Response**
+## Validation Error
+
 ```json
 {
   "success": false,
@@ -159,83 +228,169 @@ POST /api/posts
 
 ---
 
-## Environment Variables
+# ⚙ Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `PORT` | Server port | `5000` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://...` |
-| `NODE_ENV` | Environment | `development` or `production` |
-
----
-
-## Development Log
-
-### Day 1 — Project Setup
-
-- Initialized Node.js project
-- Configured Express server
-- Connected PostgreSQL database using connection pooling
-- Created project folder structure
-- Installed required dependencies
-
-**Concepts Learned:** Express application structure, PostgreSQL connection pool, environment variables, database configuration
+| Variable     | Description                  |
+| ------------ | ---------------------------- |
+| PORT         | Server Port                  |
+| DATABASE_URL | PostgreSQL Connection String |
+| NODE_ENV     | development / production     |
 
 ---
 
-### Day 2 — CRUD Operations, Input Validation & Pagination
+# 📖 Development Log
 
-**Features Implemented:**
-- Full CRUD operations for blog posts
-- Parameterized SQL queries for secure database interaction
-- Input validation middleware
-- Pagination using LIMIT and OFFSET
+## Day 1 — Project Setup
 
-**Challenges & Solutions:**
+### Completed
 
-*SQL Injection Prevention* — Directly concatenating user input into SQL queries exposes the application to injection attacks. Used parameterized queries with `$1`, `$2` placeholders to safely pass user data to PostgreSQL.
+* Initialized Node.js project
+* Configured Express server
+* Connected PostgreSQL database
+* Created folder structure
+* Installed dependencies
 
-*Input Validation* — Requests with missing or invalid fields could store inconsistent data. Created validation middleware to verify all fields before executing any database operation.
+### Concepts Learned
 
-*Pagination* — Returning every post in a single response is inefficient at scale. Implemented LIMIT and OFFSET so the API returns only a fixed subset per request.
-
-**Concepts Learned:** CRUD API design, RESTful routing, parameterized queries, SQL injection prevention, Express middleware, pagination
-
----
-
-### Day 3 — Search, DELETE Route & Centralized Error Handling
-
-**Features Implemented:**
-- DELETE route to remove posts by ID
-- Keyword search using PostgreSQL ILIKE across title and content
-- Search combined with pagination
-- Reusable response helper functions in `src/utils/response.js`
-- Centralized error handling middleware in `src/middleware/errorHandler.js`
-- Route refactoring using `next(error)` pattern
-
-**Challenges & Solutions:**
-
-*Repeated Response Objects* — Each route contained duplicate success and error response logic. Created reusable helper functions to standardize responses across the entire application.
-
-*Error Handling Across Routes* — Handling errors individually in every route increased duplication. Implemented centralized error middleware using Express's `next(error)` mechanism — one place handles all errors.
-
-*Combining Search with Pagination* — Search results needed to stay paginated. Integrated ILIKE queries with LIMIT and OFFSET, and ran a separate COUNT query in parallel to keep pagination metadata accurate.
-
-**Concepts Learned:** Centralized error handling, Express error middleware, response helpers, ILIKE keyword search, pagination with search, separation of concerns
+* Express project structure
+* PostgreSQL connection pooling
+* Environment variables
+* Database configuration
 
 ---
 
-### Day 4 — Production Deployment
+## Day 2 — CRUD Operations, Validation & Pagination
 
-- Created `schema.sql` as single source of truth for database structure
-- Configured SSL conditionally based on DATABASE_URL for local vs cloud
-- Deployed PostgreSQL database on Render
-- Deployed web service on Render with environment variables
-- Wrote professional README documentation
+### Features Implemented
+
+* Full CRUD operations
+* Parameterized SQL queries
+* Input validation middleware
+* Pagination using LIMIT and OFFSET
+
+### Challenges & Solutions
+
+#### SQL Injection Prevention
+
+Used PostgreSQL parameterized queries (`$1`, `$2`) instead of string concatenation to safely execute SQL statements.
+
+#### Input Validation
+
+Created middleware to validate request payloads before performing database operations.
+
+#### Pagination
+
+Implemented LIMIT and OFFSET to efficiently return paginated results.
+
+### Concepts Learned
+
+* CRUD API design
+* RESTful routing
+* Parameterized queries
+* SQL Injection Prevention
+* Express middleware
+* Pagination
 
 ---
 
-## Author
+## Day 3 — Search, DELETE Route & Error Handling
+
+### Features Implemented
+
+* DELETE endpoint
+* Keyword search using PostgreSQL ILIKE
+* Search with pagination
+* Response helper utilities
+* Centralized error middleware
+* Express `next(error)` implementation
+
+### Challenges & Solutions
+
+#### Repeated Responses
+
+Created reusable response helper functions to eliminate duplicated JSON response code.
+
+#### Error Handling
+
+Implemented centralized Express error middleware instead of handling errors inside every route.
+
+#### Search + Pagination
+
+Combined ILIKE search with LIMIT/OFFSET and COUNT queries to support searchable paginated results.
+
+### Concepts Learned
+
+* Express Error Middleware
+* Centralized Error Handling
+* Response Helpers
+* PostgreSQL ILIKE
+* Search with Pagination
+* Separation of Concerns
+
+---
+
+## Day 4 — Production Deployment
+
+### Completed
+
+* Created schema.sql
+* Configured SSL support
+* Connected PostgreSQL on Render
+* Deployed API to Render
+* Configured environment variables
+
+### Lessons Learned
+
+* Production deployment requires proper folder structure.
+* Environment variables are critical.
+* Cloud database credentials must be configured correctly.
+* Local development success does not always guarantee successful production deployment.
+
+---
+
+# 📚 Topics Covered
+
+* REST API Design
+* CRUD Operations
+* Express.js
+* PostgreSQL
+* SQL Queries
+* Parameterized Queries
+* SQL Injection Prevention
+* Pagination
+* Keyword Search
+* Input Validation
+* Express Middleware
+* Centralized Error Handling
+* Response Helpers
+* Environment Variables
+* Production Deployment
+* Render
+* Postman API Testing
+
+---
+
+# 🚀 Future Improvements
+
+* JWT Authentication
+* User Registration & Login
+* Role-Based Access Control (RBAC)
+* Image Upload Support
+* Comments API
+* Swagger / OpenAPI Documentation
+* Docker Support
+* Unit & Integration Testing
+
+---
+
+# 👨‍💻 Author
 
 **Harsha Vardhan**
-- GitHub: [@Harshavardhan3535](https://github.com/Harshavardhan3535)
+
+GitHub: https://github.com/Harshavardhan3535
+
+---
+
+# 📄 License
+
+This project is licensed under the **MIT License**.
