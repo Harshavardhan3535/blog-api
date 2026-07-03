@@ -1,254 +1,241 @@
-# REST Blog API
+# Blog API
 
-A RESTful Blog API built using Node.js, Express.js, and PostgreSQL.
+A RESTful Blog API built with Node.js, Express.js, and PostgreSQL. Features full CRUD operations, keyword search, pagination, input validation, and SQL injection prevention using parameterized queries.
 
-The goal of this project is to learn how SQL-based backend applications are structured while implementing CRUD operations, pagination, validation, and secure database queries.
+---
+
+## Live Demo
+
+**Base URL:** https://blog-api-56im.onrender.com
 
 ---
 
 ## Tech Stack
 
-- Node.js
-- Express.js
-- PostgreSQL
-- pg
-- Postman
-- Git & GitHub
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Database:** PostgreSQL
+- **Driver:** pg
+- **Testing:** Postman
+- **Deployment:** Render
+- **Version Control:** Git & GitHub
 
 ---
 
-## Planned Features
+## Features
 
-- Create Blog
-- Read Blogs
-- Update Blog
-- Delete Blog
-- Pagination
-- Input Validation
-- Search Blogs
-- Sorting
-- Filtering
-- Parameterized SQL Queries
-- SQL Injection Prevention
-- API Testing with Postman
-- Production Deployment
+- Full CRUD for blog posts
+- Keyword search across title and content
+- Pagination with metadata
+- Manual input validation
+- Parameterized queries (SQL injection prevention)
+- Centralized error handling
+- Consistent JSON response structure
+
+---
+
+## Local Setup
+
+### Prerequisites
+- Node.js v18+
+- PostgreSQL installed locally
+
+### Steps
+
+1. Clone the repository
+```bash
+   git clone https://github.com/Harshavardhan3535/blog-api.git
+   cd blog-api
+```
+
+2. Install dependencies
+```bash
+   npm install
+```
+
+3. Create a `.env` file in the root directory
+```env
+   PORT=5000
+   DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/blog_api
+   NODE_ENV=development
+```
+
+4. Set up the database
+   - Create a database named `blog_api` in PostgreSQL
+   - Run `schema.sql` in pgAdmin Query Tool
+
+5. Start the development server
+```bash
+   npm run dev
+```
+
+---
+
+## API Endpoints
+
+### Health Check
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Check if API is running |
+
+### Posts
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/posts` | Create a new post |
+| GET | `/api/posts` | Get all posts (paginated) |
+| GET | `/api/posts?page=1&limit=10` | Get posts with pagination |
+| GET | `/api/posts?search=keyword` | Search posts by keyword |
+| GET | `/api/posts?search=keyword&page=1&limit=5` | Search with pagination |
+| GET | `/api/posts/:id` | Get a single post |
+| PUT | `/api/posts/:id` | Update a post |
+| DELETE | `/api/posts/:id` | Delete a post |
+
+---
+
+## Request & Response Examples
+
+### Create Post
+
+**Request**
+```json
+POST /api/posts
+{
+  "title": "My First Post",
+  "content": "This is the content of my first blog post.",
+  "author": "Harsha Vardhan"
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "message": "Post created successfully",
+  "data": {
+    "id": 1,
+    "title": "My First Post",
+    "content": "This is the content of my first blog post.",
+    "author": "Harsha Vardhan",
+    "created_at": "2024-01-01T10:00:00.000Z",
+    "updated_at": "2024-01-01T10:00:00.000Z"
+  }
+}
+```
+
+### Get All Posts (Paginated)
+
+**Response**
+```json
+{
+  "success": true,
+  "message": "Posts fetched successfully",
+  "search": null,
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 3,
+    "totalPosts": 25,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  },
+  "data": [...]
+}
+```
+
+### Validation Error
+
+**Response**
+```json
+{
+  "success": false,
+  "errors": [
+    "Title is required",
+    "Content must be at least 10 characters"
+  ]
+}
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `PORT` | Server port | `5000` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://...` |
+| `NODE_ENV` | Environment | `development` or `production` |
 
 ---
 
 ## Development Log
 
-### Day 1 – Project Setup
-
-Completed:
+### Day 1 — Project Setup
 
 - Initialized Node.js project
 - Configured Express server
-- Connected PostgreSQL database
+- Connected PostgreSQL database using connection pooling
 - Created project folder structure
 - Installed required dependencies
 
-### Concepts Learned
-
-- Express application structure
-- PostgreSQL connection setup
-- Environment variables
-- Database configuration
+**Concepts Learned:** Express application structure, PostgreSQL connection pool, environment variables, database configuration
 
 ---
 
-## Day 2 – CRUD Operations, Input Validation & Pagination
+### Day 2 — CRUD Operations, Input Validation & Pagination
 
-### Features Implemented
+**Features Implemented:**
+- Full CRUD operations for blog posts
+- Parameterized SQL queries for secure database interaction
+- Input validation middleware
+- Pagination using LIMIT and OFFSET
 
-* Implemented CRUD (Create, Read, Update, Delete) operations for blog posts.
-* Connected Express routes with PostgreSQL queries.
-* Used parameterized SQL queries to securely interact with the database.
-* Added input validation middleware to validate incoming request data.
-* Implemented pagination for retrieving blog posts efficiently.
+**Challenges & Solutions:**
 
-### API Endpoints Implemented
+*SQL Injection Prevention* — Directly concatenating user input into SQL queries exposes the application to injection attacks. Used parameterized queries with `$1`, `$2` placeholders to safely pass user data to PostgreSQL.
 
-| Method | Endpoint       | Description                             |
-| ------ | -------------- | --------------------------------------- |
-| POST   | /api/posts     | Create a new blog post                  |
-| GET    | /api/posts     | Retrieve all blog posts with pagination |
-| GET    | /api/posts/:id | Retrieve a specific blog post           |
-| PUT    | /api/posts/:id | Update an existing blog post            |
-| DELETE | /api/posts/:id | Delete a blog post                      |
+*Input Validation* — Requests with missing or invalid fields could store inconsistent data. Created validation middleware to verify all fields before executing any database operation.
 
-### Challenges Encountered
+*Pagination* — Returning every post in a single response is inefficient at scale. Implemented LIMIT and OFFSET so the API returns only a fixed subset per request.
 
-#### 1. SQL Injection Prevention
-
-**Issue**
-
-Directly concatenating user input into SQL queries can expose the application to SQL Injection attacks.
-
-**Solution**
-
-Used parameterized queries with placeholders (`$1`, `$2`, etc.) to safely pass user input to PostgreSQL.
+**Concepts Learned:** CRUD API design, RESTful routing, parameterized queries, SQL injection prevention, Express middleware, pagination
 
 ---
 
-#### 2. Input Validation
+### Day 3 — Search, DELETE Route & Centralized Error Handling
 
-**Issue**
+**Features Implemented:**
+- DELETE route to remove posts by ID
+- Keyword search using PostgreSQL ILIKE across title and content
+- Search combined with pagination
+- Reusable response helper functions in `src/utils/response.js`
+- Centralized error handling middleware in `src/middleware/errorHandler.js`
+- Route refactoring using `next(error)` pattern
 
-Requests containing missing or invalid fields could lead to inconsistent data being stored in the database.
+**Challenges & Solutions:**
 
-**Solution**
+*Repeated Response Objects* — Each route contained duplicate success and error response logic. Created reusable helper functions to standardize responses across the entire application.
 
-Created validation middleware to verify request data before executing database operations.
+*Error Handling Across Routes* — Handling errors individually in every route increased duplication. Implemented centralized error middleware using Express's `next(error)` mechanism — one place handles all errors.
 
----
+*Combining Search with Pagination* — Search results needed to stay paginated. Integrated ILIKE queries with LIMIT and OFFSET, and ran a separate COUNT query in parallel to keep pagination metadata accurate.
 
-#### 3. Pagination
-
-**Issue**
-
-Returning every blog post in a single request is inefficient as the database grows.
-
-**Solution**
-
-Implemented pagination using `LIMIT` and `OFFSET` so the API returns only a subset of records per request.
-
-### Concepts Learned
-
-* CRUD API Design
-* RESTful Routing
-* PostgreSQL Parameterized Queries
-* SQL Injection Prevention
-* Express Middleware
-* Input Validation
-* Pagination using LIMIT and OFFSET
-* Separation of Routes, Controllers, and Database Logic
-
-### Key Takeaway
-
-Building a secure REST API involves more than implementing CRUD operations. Proper input validation, parameterized SQL queries, and pagination improve application security, maintainability, and performance while following backend development best practices.
+**Concepts Learned:** Centralized error handling, Express error middleware, response helpers, ILIKE keyword search, pagination with search, separation of concerns
 
 ---
 
-## Day 3 – Search API, DELETE Route & Centralized Error Handling
+### Day 4 — Production Deployment
 
-### Features Implemented
-
-* Implemented the DELETE API to remove blog posts by ID.
-* Added keyword-based search functionality for blog posts.
-* Combined search functionality with pagination.
-* Created reusable API response helper functions.
-* Implemented centralized error handling middleware.
-* Refactored routes to improve code readability and maintainability.
-
-### API Endpoints Implemented
-
-| Method | Endpoint                                 | Description                       |
-| ------ | ---------------------------------------- | --------------------------------- |
-| DELETE | /api/posts/:id                           | Delete a blog post by ID          |
-| GET    | /api/posts?search=keyword&page=1&limit=5 | Search blog posts with pagination |
-
-### Project Improvements
-
-#### Response Helper Functions
-
-Created `src/utils/response.js` containing reusable helper functions for standardized API responses.
-
-Benefits:
-
-* Consistent response structure across all endpoints
-* Reduced duplicate code
-* Easier maintenance
-* Improved readability
+- Created `schema.sql` as single source of truth for database structure
+- Configured SSL conditionally based on DATABASE_URL for local vs cloud
+- Deployed PostgreSQL database on Render
+- Deployed web service on Render with environment variables
+- Wrote professional README documentation
 
 ---
 
-#### Centralized Error Handling
+## Author
 
-Created `src/middleware/errorHandler.js` and registered it after all application routes.
-
-Instead of sending error responses inside every route, errors are forwarded using:
-
-```javascript
-next(error);
-```
-
-The centralized middleware processes all application errors in one place and returns a consistent error response.
-
-Benefits:
-
-* Cleaner route handlers
-* Easier debugging
-* Consistent error responses
-* Better code organization
-
----
-
-#### Search Functionality
-
-Implemented keyword-based search using SQL.
-
-The API now supports searching blog posts while maintaining pagination.
-
-Example:
-
-```
-GET /api/posts?search=node&page=1&limit=5
-```
-
-This allows users to retrieve only relevant posts instead of fetching the entire dataset.
-
----
-
-### Challenges Encountered
-
-#### 1. Repeated Response Objects
-
-**Issue**
-
-Each route contained repeated success and error response logic.
-
-**Solution**
-
-Created reusable response helper functions to standardize API responses across the application.
-
----
-
-#### 2. Error Handling Across Multiple Routes
-
-**Issue**
-
-Handling errors individually inside every route increased code duplication and reduced maintainability.
-
-**Solution**
-
-Implemented centralized error handling middleware using Express's `next(error)` mechanism.
-
----
-
-#### 3. Combining Search with Pagination
-
-**Issue**
-
-Search results needed to remain paginated instead of returning every matching record.
-
-**Solution**
-
-Integrated SQL search queries with `LIMIT` and `OFFSET` to efficiently paginate filtered results.
-
-### Concepts Learned
-
-* Centralized Error Handling
-* Express Error Middleware
-* Custom Response Helpers
-* Keyword Search APIs
-* SQL LIKE Queries
-* Pagination with Search
-* Route Refactoring
-* Separation of Concerns
-* Cleaner API Architecture
-
-### Key Takeaway
-
-As backend applications grow, maintainability becomes as important as functionality. Centralized error handling, reusable response utilities, and clean route design reduce code duplication, improve readability, and make the API easier to extend and debug.
-
----
+**Harsha Vardhan**
+- GitHub: [@Harshavardhan3535](https://github.com/Harshavardhan3535)
