@@ -29,6 +29,11 @@ https://blog-api-56im.onrender.com
 
 ---
 
+## System Architecture
+![Architecture](screenshots/architecture.png)
+
+---
+
 # 📂 Project Structure
 
 ```text
