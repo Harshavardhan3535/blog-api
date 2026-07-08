@@ -32,21 +32,41 @@ https://blog-api-56im.onrender.com
 # 📂 Project Structure
 
 ```text
+# 📂 Project Structure
+
+```text
 blog-api/
 │
 ├── src/
 │   ├── config/
+│   │   └── db.js
 │   ├── middleware/
+│   │   ├── validatePost.js
+│   │   └── errorHandler.js
 │   ├── routes/
+│   │   └── posts.js
 │   ├── utils/
-│   ├── controllers/
+│   │   └── response.js
 │   └── app.js
+│
+├── screenshots/
+│   ├── health-check.png
+│   ├── create-post.png
+│   ├── get-all-posts.png
+│   ├── search-posts.png
+│   ├── validation-error.png
+│   └── delete-post.png
+│
+├── interview-prep/
+│   └── project2-interview-questions.md
 │
 ├── schema.sql
 ├── server.js
+├── .env
+├── .gitignore
 ├── package.json
-├── package-lock.json
 └── README.md
+```
 ```
 
 ---
@@ -140,6 +160,28 @@ npm run dev
 | GET    | `/api/posts/:id`                           | Get post by ID      |
 | PUT    | `/api/posts/:id`                           | Update post         |
 | DELETE | `/api/posts/:id`                           | Delete post         |
+
+---
+
+# 📸 Screenshots
+
+## Health Check
+![Health Check](screenshots/health-check.png)
+
+## Create Post
+![Create Post](screenshots/create-post.png)
+
+## Get All Posts with Pagination
+![Get All Posts](screenshots/get-all-posts.png)
+
+## Keyword Search
+![Search Posts](screenshots/search-posts.png)
+
+## Validation Error
+![Validation Error](screenshots/validation-error.png)
+
+## Delete Post
+![Delete Post](screenshots/delete-post.png)
 
 ---
 
